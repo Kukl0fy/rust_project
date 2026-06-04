@@ -6,3 +6,4 @@ pub mod player;
 pub mod position;
 pub mod state;
 pub mod input;
+pub mod map_generator;
