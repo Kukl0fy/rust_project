@@ -1,12 +1,17 @@
 use crate::game::{direction::{self, Direction}, position::Position};
+use crate::game::combat_stats::CombatStats;
+use crate::game::character_class::CharacterClass;
 
 pub struct Player {
     pos: Position,
+    class: CharacterClass,
+    pub stats: CombatStats,
 }
 
 impl Player {
-    pub fn new(pos: Position) -> Self {
-        Self { pos }
+    pub fn new(pos: Position, class: CharacterClass) -> Self {
+        let stats = class.default_stats();
+        Self { pos, class, stats }
     }
 
     pub fn pos(&self) -> Position {

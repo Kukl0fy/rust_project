@@ -8,7 +8,7 @@ use game::position::Position;
 use game::state::State;
 use ui::render::View;
 use game::map_generator::{MapGenerator,MapGeneratorConfig};
-
+use game::character_class::CharacterClass;
 use crate::game::direction;
 use crate::game::input;
 use crate::game::input::InputAction;
@@ -28,7 +28,7 @@ let config = MapGeneratorConfig::new(
     let generator = MapGenerator::new(config);
     let generator_result = generator.generate_map();
     let _terminal = TerminalGuard::new()?;
-    let mut state = State::new(generator_result.map, Player::new(generator_result.player_start));
+    let mut state = State::new(generator_result.map, Player::new(generator_result.player_start, CharacterClass::Warrior));
     let view = View;
     loop {
         view.render(&state)?;

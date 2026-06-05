@@ -7,3 +7,6 @@ pub mod position;
 pub mod state;
 pub mod input;
 pub mod map_generator;
+pub mod combat_stats;
+pub mod character_class;
+pub mod combat;
