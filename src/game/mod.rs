@@ -10,3 +10,5 @@ pub mod map_generator;
 pub mod combat_stats;
 pub mod character_class;
 pub mod combat;
+pub mod entity_generator;
+pub mod level_generator;
