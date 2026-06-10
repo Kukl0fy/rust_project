@@ -4,6 +4,7 @@ use rand::prelude::*;
 pub struct MapGenerationResult {
     pub map: Map,
     pub player_start: Position,
+    pub room_space: Vec<Position>
 }
 
 pub struct MapGenerator{
@@ -106,10 +107,10 @@ impl MapGenerator {
                 rooms.push(room);
             }
         }
-
         for r in &rooms{
             r.carve_room(&mut tiles);
         }
+        let room_space = self.get_room_space(&tiles);
 
         self.connect_all_rooms(&mut tiles, &rooms);
 
@@ -120,6 +121,7 @@ impl MapGenerator {
             x: player_start.0 as i32,
             y: player_start.1 as i32,
     },
+    room_space: room_space
 }
     }
 
@@ -193,4 +195,15 @@ fn connect_all_rooms(&self, tiles: &mut Vec<Vec<Tile>>, rooms: &[Room]) {
     }
 }
     
+fn get_room_space(&self,tiles:&Vec<Vec<Tile>>)->Vec<Position>{
+    let mut room_space: Vec<Position> = Vec::new();
+    for y in 0..tiles.len(){
+        for x in 0..tiles[0].len(){
+            if tiles[y][x] == Tile::Floor{
+                room_space.push(Position{x: x as i32 ,y: y as i32});
+            }
+        }
+    }
+    room_space
+}
 }
