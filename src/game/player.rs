@@ -1,6 +1,7 @@
-use crate::game::{direction::{self, Direction}, position::Position};
-use crate::game::combat_stats::CombatStats;
+use crate::game::chest::ChestItem;
 use crate::game::character_class::CharacterClass;
+use crate::game::combat_stats::CombatStats;
+use crate::game::{direction::Direction, position::Position};
 
 pub struct Player {
     pos: Position,
@@ -23,6 +24,10 @@ impl Player {
     }
 
     pub fn move_player(&mut self, dir: Direction) {
-        self.pos =self.pos + dir.to_pos() 
+        self.pos = self.pos + dir.to_pos();
+    }
+
+    pub fn apply_item(&mut self, item: &ChestItem) {
+        item.apply_to(&mut self.stats);
     }
 }

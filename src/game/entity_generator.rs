@@ -1,4 +1,5 @@
 use crate::game::{
+    chest::{Chest, ChestItem},
     monster::{Monster, MonsterType},
     position::Position,
 };
@@ -25,6 +26,7 @@ impl EntityGeneratorConfig {
 
 pub struct Entities {
     monsters: Vec<Monster>,
+    chests: Vec<Chest>,
 }
 
 impl Entities {
@@ -32,8 +34,16 @@ impl Entities {
         &self.monsters
     }
 
+    pub fn chests(&self) -> &[Chest] {
+        &self.chests
+    }
+
     pub fn into_monsters(self) -> Vec<Monster> {
         self.monsters
+    }
+
+    pub fn into_parts(self) -> (Vec<Monster>, Vec<Chest>) {
+        (self.monsters, self.chests)
     }
 }
 
@@ -67,7 +77,14 @@ impl EntitiesGenerator {
             .map(|&pos| Self::place_monster(pos, Self::choose_monster_type(&mut rng)))
             .collect();
 
-        Entities { monsters }
+        Entities {
+            monsters,
+            chests: Vec::new(),
+        }
+    }
+
+    fn place_chest(position: Position, item: ChestItem) -> Chest {
+        Chest::new(position, item)
     }
 
     fn is_too_close_to_player(pos: Position, player_start: Position) -> bool {
