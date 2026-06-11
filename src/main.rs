@@ -31,7 +31,7 @@ fn main() -> std::io::Result<()> {
         Player::new(player_start, CharacterClass::Warrior),
         monsters,
     );
-    let view = View;
+    let mut view = View::new();
     loop {
         view.render(&state)?;
         match input::read_input()? {

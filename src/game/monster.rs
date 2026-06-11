@@ -10,8 +10,17 @@ pub enum MonsterType {
 
 }
 
-impl MonsterType{
-    pub fn default_stats(&self) -> CombatStats{
+impl MonsterType {
+    pub fn name(&self) -> &'static str {
+        match self {
+            MonsterType::Goblin => "Goblin",
+            MonsterType::Spider => "Pajak",
+            MonsterType::MindFlayer => "Mind Flayer",
+            MonsterType::Vampire => "Wampir",
+        }
+    }
+
+    pub fn default_stats(&self) -> CombatStats {
         match self{
             MonsterType::Goblin => CombatStats {
                 hp: 30,

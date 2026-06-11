@@ -9,36 +9,84 @@ pub enum CombatOutcome {
     Fled,
 }
 
-pub fn process_turn(player: &mut Player, monster: &mut Monster, input: Direction) -> CombatOutcome {
+pub struct CombatResult {
+    pub outcome: CombatOutcome,
+    pub message: String,
+}
+
+pub fn process_turn(player: &mut Player, monster: &mut Monster, input: Direction) -> CombatResult {
     match input {
         Direction::Up => {
-            // Atak fizyczny
             let damage = (player.stats.attack - monster.stats.defense).max(1);
             monster.stats.hp -= damage;
+
+            if monster.stats.hp <= 0 {
+                return CombatResult {
+                    outcome: CombatOutcome::MonsterDefeated,
+                    message: format!("Atak fizyczny! Zadajesz {} obrazen. Pokonales potwora!", damage),
+                };
+            }
+
+            let counter = (monster.stats.attack - player.stats.defense).max(1);
+            player.stats.hp -= counter;
+
+            if player.stats.hp <= 0 {
+                return CombatResult {
+                    outcome: CombatOutcome::PlayerDefeated,
+                    message: format!(
+                        "Atak fizyczny! Zadajesz {} obrazen. Potwor odpowiada za {} obrazen.",
+                        damage, counter
+                    ),
+                };
+            }
+
+            CombatResult {
+                outcome: CombatOutcome::Ongoing,
+                message: format!(
+                    "Atak fizyczny! Zadajesz {} obrazen. Potwor odpowiada za {} obrazen.",
+                    damage, counter
+                ),
+            }
         }
         Direction::Down => {
-            // Atak specjalny
             let damage = (player.stats.sp_attack - monster.stats.sp_defense).max(1);
             monster.stats.hp -= damage;
+
+            if monster.stats.hp <= 0 {
+                return CombatResult {
+                    outcome: CombatOutcome::MonsterDefeated,
+                    message: format!("Atak specjalny! Zadajesz {} obrazen. Pokonales potwora!", damage),
+                };
+            }
+
+            let counter = (monster.stats.attack - player.stats.defense).max(1);
+            player.stats.hp -= counter;
+
+            if player.stats.hp <= 0 {
+                return CombatResult {
+                    outcome: CombatOutcome::PlayerDefeated,
+                    message: format!(
+                        "Atak specjalny! Zadajesz {} obrazen. Potwor odpowiada za {} obrazen.",
+                        damage, counter
+                    ),
+                };
+            }
+
+            CombatResult {
+                outcome: CombatOutcome::Ongoing,
+                message: format!(
+                    "Atak specjalny! Zadajesz {} obrazen. Potwor odpowiada za {} obrazen.",
+                    damage, counter
+                ),
+            }
         }
-        Direction::Left => {
-            // Ucieczka
-            return CombatOutcome::Fled;
-        }
-        _ => return CombatOutcome::Ongoing,
+        Direction::Left => CombatResult {
+            outcome: CombatOutcome::Fled,
+            message: "Uciekasz z walki.".to_string(),
+        },
+        _ => CombatResult {
+            outcome: CombatOutcome::Ongoing,
+            message: "W walce: W=atak, S=atak spec., A=ucieczka.".to_string(),
+        },
     }
-
-    if monster.stats.hp <= 0 {
-        return CombatOutcome::MonsterDefeated;
-    }
-
-    // atak potwora
-    let monster_damage = (monster.stats.attack - player.stats.defense).max(1);
-    player.stats.hp -= monster_damage;
-
-    if player.stats.hp <= 0 {
-        return CombatOutcome::PlayerDefeated;
-    }
-
-    CombatOutcome::Ongoing
 }
