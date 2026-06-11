@@ -7,6 +7,7 @@ pub enum Tile {
     Exit,
 }
 
+#[derive(Clone)]
 pub struct Map {
     tiles: Vec<Vec<Tile>>,
     width: usize,

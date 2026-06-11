@@ -48,6 +48,7 @@ impl MonsterType{
         }
     }
 }
+#[derive(Clone)]
 pub struct Monster {
     pos: Position,
     pub monster_type: MonsterType,

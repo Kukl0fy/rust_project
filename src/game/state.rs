@@ -23,8 +23,13 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(map: Map, player: Player) -> Self {
-        Self { map, player, mode: GameMode::Exploration, entities: Vec::new() }
+    pub fn new(map: Map, player: Player, entities: Vec<Monster>) -> Self {
+        Self {
+            map,
+            player,
+            mode: GameMode::Exploration,
+            entities,
+        }
     }
 
     pub fn add_monster(&mut self, monster:Monster){

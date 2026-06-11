@@ -10,6 +10,7 @@ pub struct MapGenerationResult {
 pub struct MapGenerator{
     config: MapGeneratorConfig
 }
+#[derive(Clone)]
 pub struct MapGeneratorConfig{
     width: usize,
     height: usize,
