@@ -4,16 +4,24 @@ mod terminal;
 mod ui;
 
 use game::character_class::CharacterClass;
-use game::input::InputAction;
 use game::level_generator::LevelGenerator;
 use game::player::Player;
 use game::state::State;
-use terminal::TerminalGuard;
-use ui::render::View;
+use gui::GuiRenderer;
+use macroquad::prelude::*;
 
-use crate::game::input;
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "Rust Pixel Dungeon".to_owned(),
+        window_width: 1280,
+        window_height: 720,
+        window_resizable: false,
+        ..Default::default()
+    }
+}
 
-fn main() -> std::io::Result<()> {
+#[macroquad::main(window_conf)]
+async fn main() {
     let level_generator = LevelGenerator::new(
         80,  // width
         40,  // height
@@ -26,21 +34,36 @@ fn main() -> std::io::Result<()> {
     );
 
     let (map, monsters, player_start) = level_generator.generate_level().into_parts();
-    let _terminal = TerminalGuard::new()?;
     let mut state = State::new(
         map,
         Player::new(player_start, CharacterClass::Warrior),
         monsters,
     );
-    let mut view = View::new();
-    loop {
-        view.render(&state)?;
-        match input::read_input()? {
-            InputAction::Move(direction) => state.move_player(direction),
-            InputAction::Quit => break,
-            InputAction::None => {}
-        }
-    }
+    let renderer = GuiRenderer::new();
 
-    Ok(())
+    loop {
+        // Handle input
+        if is_key_pressed(KeyCode::Escape) {
+            break;
+        }
+
+        // Handle arrow keys for movement
+        if is_key_pressed(KeyCode::Up) {
+            state.move_player(game::direction::Direction::Up);
+        }
+        if is_key_pressed(KeyCode::Down) {
+            state.move_player(game::direction::Direction::Down);
+        }
+        if is_key_pressed(KeyCode::Left) {
+            state.move_player(game::direction::Direction::Left);
+        }
+        if is_key_pressed(KeyCode::Right) {
+            state.move_player(game::direction::Direction::Right);
+        }
+
+        // Render the game
+        renderer.render(&state);
+
+        next_frame().await;
+    }
 }
