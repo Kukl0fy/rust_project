@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 crossterm = "0.29"
 rand = "0.10"
+macroquad = "0.4"

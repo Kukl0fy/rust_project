@@ -1,6 +1,7 @@
 mod game;
-mod ui;
+mod gui;
 mod terminal;
+mod ui;
 
 use game::character_class::CharacterClass;
 use game::input::InputAction;
