@@ -1,4 +1,5 @@
 use crate::game::{
+    chest::Chest,
     entity_generator::{EntitiesGenerator, EntityGeneratorConfig},
     map::Map,
     map_generator::{MapGenerator, MapGeneratorConfig},
@@ -14,6 +15,7 @@ pub struct LevelGenerator {
 pub struct Level {
     map: Map,
     monsters: Vec<Monster>,
+    chests: Vec<Chest>,
     player_start: Position,
 }
 
@@ -26,12 +28,16 @@ impl Level {
         &self.monsters
     }
 
+    pub fn chests(&self) -> &[Chest] {
+        &self.chests
+    }
+
     pub fn player_start(&self) -> Position {
         self.player_start
     }
 
-    pub fn into_parts(self) -> (Map, Vec<Monster>, Position) {
-        (self.map, self.monsters, self.player_start)
+    pub fn into_parts(self) -> (Map, Vec<Monster>, Vec<Chest>, Position) {
+        (self.map, self.monsters, self.chests, self.player_start)
     }
 }
 
@@ -44,7 +50,9 @@ impl LevelGenerator {
         room_min_height: usize,
         room_max_height: usize,
         max_rooms: usize,
-        monster_count: usize,
+        min_monsters_per_room: usize,
+        max_monsters_per_room: usize,
+        chest_spawn_chance: f64,
     ) -> Self {
         LevelGenerator {
             map_config: MapGeneratorConfig::new(
@@ -56,7 +64,11 @@ impl LevelGenerator {
                 room_max_height,
                 max_rooms,
             ),
-            entity_config: EntityGeneratorConfig::new(monster_count),
+            entity_config: EntityGeneratorConfig::new(
+                min_monsters_per_room,
+                max_monsters_per_room,
+                chest_spawn_chance,
+            ),
         }
     }
 
@@ -66,13 +78,16 @@ impl LevelGenerator {
 
         let entity_generator = EntitiesGenerator::new(self.entity_config.clone());
         let entities = entity_generator.generate_entities(
-            &map_result.room_space,
+            &map_result.rooms,
+            map_result.start_room_index,
             map_result.player_start,
         );
+        let (monsters, chests) = entities.into_parts();
 
         Level {
             map: map_result.map,
-            monsters: entities.into_monsters(),
+            monsters,
+            chests,
             player_start: map_result.player_start,
         }
     }

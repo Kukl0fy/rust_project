@@ -22,15 +22,18 @@ fn main() -> std::io::Result<()> {
         4,   // room_min_height
         8,   // room_max_height
         25,  // max_rooms
-        15,  // monster_count
+        1,   // min_monsters_per_room
+        4,   // max_monsters_per_room
+        0.4, // chest_spawn_chance
     );
 
-    let (map, monsters, player_start) = level_generator.generate_level().into_parts();
+    let (map, monsters, chests, player_start) = level_generator.generate_level().into_parts();
     let _terminal = TerminalGuard::new()?;
     let mut state = State::new(
         map,
         Player::new(player_start, CharacterClass::Warrior),
         monsters,
+        chests,
     );
     let mut view = View::new();
     loop {

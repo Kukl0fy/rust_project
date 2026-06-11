@@ -83,14 +83,16 @@ pub struct Chest {
     pos: Position,
     item: ChestItem,
     opened: bool,
+    room_index: usize,
 }
 
 impl Chest {
-    pub fn new(pos: Position, item: ChestItem) -> Self {
+    pub fn new(pos: Position, item: ChestItem, room_index: usize) -> Self {
         Self {
             pos,
             item,
             opened: false,
+            room_index,
         }
     }
 
@@ -104,6 +106,10 @@ impl Chest {
 
     pub fn item(&self) -> &ChestItem {
         &self.item
+    }
+
+    pub fn room_index(&self) -> usize {
+        self.room_index
     }
 
     /// Zwraca przedmiot przy pierwszym otwarciu skrzynki.
@@ -151,6 +157,7 @@ mod tests {
         let mut chest = Chest::new(
             Position { x: 1, y: 2 },
             ChestItem::new("Test", ItemEffect::BoostAttack(2)),
+            1,
         );
 
         assert!(chest.open().is_some());

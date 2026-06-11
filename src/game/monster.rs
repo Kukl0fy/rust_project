@@ -62,14 +62,24 @@ pub struct Monster {
     pos: Position,
     pub monster_type: MonsterType,
     pub stats: CombatStats,
+    room_index: usize,
 }
 
-impl Monster{
-    pub fn new(pos: Position, monster_type: MonsterType) -> Self{
-        Self { pos, monster_type, stats: monster_type.default_stats() }
+impl Monster {
+    pub fn new(pos: Position, monster_type: MonsterType, room_index: usize) -> Self {
+        Self {
+            pos,
+            monster_type,
+            stats: monster_type.default_stats(),
+            room_index,
+        }
     }
 
     pub fn pos(&self) -> Position {
         self.pos
+    }
+
+    pub fn room_index(&self) -> usize {
+        self.room_index
     }
 }

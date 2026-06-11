@@ -4,6 +4,7 @@ pub mod monster;
 pub mod object;
 pub mod player;
 pub mod position;
+pub mod room;
 pub mod state;
 pub mod input;
 pub mod map_generator;
