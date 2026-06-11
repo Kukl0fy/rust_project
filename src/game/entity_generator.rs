@@ -5,8 +5,8 @@ pub struct EntityGeneratorConfig{
 
 }
 impl EntityGeneratorConfig {
-   pub fn new(monster_count: i32) -> Self{
-        EntityGeneratorConfig { monster_count }
+   pub fn new(monster_count: i32) -> Self {
+        EntityGeneratorConfig { monster_count: monster_count as usize }
     }
 }
 
@@ -21,18 +21,21 @@ pub struct EntitiesGenerator{
 impl EntitiesGenerator{
     pub fn generate_entities(&self, room_space:&Vec<Position>) -> Entities{
         let mut occupied_pos = Vec::new();
-        let mut avilable_pos = room_space;
+        let mut avilable_pos = room_space.clone();
         let mut rng = rand::rng();
-        let (picked,avilable_pos) = avilable_pos.partial_shuffle(&mut rng, self.config.monster_count);
+        let (picked, _avilable_pos) = avilable_pos.partial_shuffle(&mut rng, self.config.monster_count);
         occupied_pos.extend(picked);
 
-
+        Entities {
+            monsters: Monster::new(Position { x: 0, y: 0 }, crate::game::monster::MonsterType::Goblin)
+        }
     }
-    fn place_monster(&self,position: Position){
+    
+    fn place_monster(&self, _position: Position) {
         
     }
 
-    fn choose_monster_type(){
+    fn choose_monster_type() {
         
     }
 }

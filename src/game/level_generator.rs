@@ -23,9 +23,12 @@ impl LevelGenerator{
         monster_count: i32) -> Self{
         LevelGenerator{mapConfig: MapGeneratorConfig::new(width, height, room_min_width, room_max_width, room_min_height, room_max_height, max_rooms),entityConfig: EntityGeneratorConfig::new(monster_count)}
     }
-    pub fn generateLevel(&self) -> Level{
+    pub fn generateLevel(&self) -> Level {
         let mapGenerator = MapGenerator::new(self.mapConfig);
         let mapGeneratorResult = mapGenerator.generate_map();
 
+        Level {
+            map: mapGeneratorResult.map
+        }
     }
 }
