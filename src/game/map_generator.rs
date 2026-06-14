@@ -97,7 +97,7 @@ impl MapGenerator {
     pub fn generate_map(&self) -> MapGenerationResult {
         let width = self.config.width;
         let height = self.config.height;
-        let mut tiles = vec![vec![Tile::Wall; width]; height];
+        let mut tiles = vec![vec![Tile::Void; width]; height];
         let mut raw_rooms: Vec<RawRoom> = Vec::new();
 
         for _ in 0..self.config.max_rooms {
@@ -112,6 +112,7 @@ impl MapGenerator {
         }
 
         self.connect_all_rooms(&mut tiles, &raw_rooms);
+        Self::place_walls(&mut tiles);
 
         let rooms: Vec<Room> = raw_rooms
             .iter()
@@ -164,6 +165,50 @@ impl MapGenerator {
         for y in start_y.min(end_y)..=start_y.max(end_y) {
             tiles[y][end_x] = Tile::Floor;
         }
+    }
+
+    fn place_walls(tiles: &mut [Vec<Tile>]) {
+        let height = tiles.len();
+        let width = tiles[0].len();
+        let mut wall_positions = Vec::new();
+
+        for y in 0..height {
+            for x in 0..width {
+                if tiles[y][x] != Tile::Void {
+                    continue;
+                }
+
+                if Self::has_floor_neighbor(tiles, x, y, width, height) {
+                    wall_positions.push((x, y));
+                }
+            }
+        }
+
+        for (x, y) in wall_positions {
+            tiles[y][x] = Tile::Wall;
+        }
+    }
+
+    fn has_floor_neighbor(
+        tiles: &[Vec<Tile>],
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+    ) -> bool {
+        if x > 0 && matches!(tiles[y][x - 1], Tile::Floor | Tile::Exit) {
+            return true;
+        }
+        if x + 1 < width && matches!(tiles[y][x + 1], Tile::Floor | Tile::Exit) {
+            return true;
+        }
+        if y > 0 && matches!(tiles[y - 1][x], Tile::Floor | Tile::Exit) {
+            return true;
+        }
+        if y + 1 < height && matches!(tiles[y + 1][x], Tile::Floor | Tile::Exit) {
+            return true;
+        }
+        false
     }
 
     fn connect_all_rooms(&self, tiles: &mut Vec<Vec<Tile>>, rooms: &[RawRoom]) {

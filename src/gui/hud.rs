@@ -1,0 +1,189 @@
+use macroquad::prelude::*;
+use crate::game::state::State;
+
+pub struct Hud {
+    position_x: f32,
+    position_y: f32,
+}
+
+impl Hud {
+    pub fn new(position_x: f32, position_y: f32) -> Self {
+        Self { position_x, position_y }
+    }
+
+    pub fn render(&self, state: &State) {
+        let player = state.player();
+        
+        // Semi-transparent background for HUD
+        draw_rectangle(
+            self.position_x,
+            self.position_y,
+            250.0,
+            150.0,
+            Color::new(0.1, 0.1, 0.1, 0.7),
+        );
+
+        // Border
+        draw_rectangle_lines(
+            self.position_x,
+            self.position_y,
+            250.0,
+            150.0,
+            2.0,
+            WHITE,
+        );
+
+        let text_x = self.position_x + 15.0;
+        let mut text_y = self.position_y + 15.0;
+        let line_height = 25.0;
+
+        // Title
+        draw_text("PLAYER STATS", text_x, text_y, 18.0, YELLOW);
+        text_y += line_height;
+
+        // Health
+        let health_text = format!("HP: {}/{}", player.stats.hp, player.stats.max_hp);
+        draw_text(&health_text, text_x, text_y, 16.0, GREEN);
+        text_y += line_height;
+
+        // Attack
+        let attack_text = format!("ATK: {}", player.stats.attack);
+        draw_text(&attack_text, text_x, text_y, 16.0, Color::new(0.0, 1.0, 1.0, 1.0));
+        text_y += line_height;
+
+        // Defense
+        let defense_text = format!("DEF: {}", player.stats.defense);
+        draw_text(&defense_text, text_x, text_y, 16.0, WHITE);
+    }
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum MenuState {
+    MainMenu,
+    Playing,
+    PauseMenu,
+    GameOver,
+}
+
+pub struct Menu {
+    state: MenuState,
+}
+
+impl Menu {
+    pub fn new() -> Self {
+        Self {
+            state: MenuState::MainMenu,
+        }
+    }
+
+    pub fn current_state(&self) -> MenuState {
+        self.state
+    }
+
+    pub fn set_state(&mut self, state: MenuState) {
+        self.state = state;
+    }
+
+    pub fn render_main_menu(&self) {
+        clear_background(BLACK);
+
+        let screen_width = screen_width();
+        let screen_height = screen_height();
+        let center_x = screen_width / 2.0;
+        let center_y = screen_height / 2.0;
+
+        // Title
+        let title = "PIXEL DUNGEON";
+        let title_size = 60.0;
+        let title_width = measure_text(title, None, title_size as u16, 1.0).width;
+        draw_text(
+            title,
+            center_x - title_width / 2.0,
+            center_y - 80.0,
+            title_size,
+            YELLOW,
+        );
+
+        // Menu options
+        let options = vec!["[ENTER] Start Game", "[Q] Quit"];
+        let option_y_start = center_y + 40.0;
+
+        for (i, option) in options.iter().enumerate() {
+            let option_width = measure_text(option, None, 24, 1.0).width;
+            draw_text(
+                option,
+                center_x - option_width / 2.0,
+                option_y_start + (i as f32) * 50.0,
+                24.0,
+                WHITE,
+            );
+        }
+
+        // Instructions
+        let instructions = "Navigate the dungeon, defeat monsters, find treasures";
+        let inst_width = measure_text(instructions, None, 16, 1.0).width;
+        draw_text(
+            instructions,
+            center_x - inst_width / 2.0,
+            screen_height - 40.0,
+            16.0,
+            GRAY,
+        );
+    }
+
+    pub fn render_pause_menu(&self) {
+        // Semi-transparent overlay
+        draw_rectangle(0.0, 0.0, screen_width(), screen_height(), Color::new(0.0, 0.0, 0.0, 0.7));
+
+        let center_x = screen_width() / 2.0;
+        let center_y = screen_height() / 2.0;
+
+        // Title
+        let title = "PAUSED";
+        let title_width = measure_text(title, None, 50, 1.0).width;
+        draw_text(title, center_x - title_width / 2.0, center_y - 60.0, 50.0, YELLOW);
+
+        // Options
+        let options = vec!["[P] Resume", "[M] Main Menu", "[Q] Quit"];
+        let option_y_start = center_y + 20.0;
+
+        for (i, option) in options.iter().enumerate() {
+            let option_width = measure_text(option, None, 24, 1.0).width;
+            draw_text(
+                option,
+                center_x - option_width / 2.0,
+                option_y_start + (i as f32) * 50.0,
+                24.0,
+                WHITE,
+            );
+        }
+    }
+
+    pub fn render_game_over(&self, victory: bool) {
+        clear_background(BLACK);
+
+        let center_x = screen_width() / 2.0;
+        let center_y = screen_height() / 2.0;
+
+        // Title
+        let title = if victory { "VICTORY!" } else { "GAME OVER" };
+        let title_color = if victory { LIME } else { RED };
+        let title_width = measure_text(title, None, 60, 1.0).width;
+        draw_text(title, center_x - title_width / 2.0, center_y - 60.0, 60.0, title_color);
+
+        // Options
+        let options = vec!["[ENTER] Main Menu", "[Q] Quit"];
+        let option_y_start = center_y + 40.0;
+
+        for (i, option) in options.iter().enumerate() {
+            let option_width = measure_text(option, None, 24, 1.0).width;
+            draw_text(
+                option,
+                center_x - option_width / 2.0,
+                option_y_start + (i as f32) * 50.0,
+                24.0,
+                WHITE,
+            );
+        }
+    }
+}

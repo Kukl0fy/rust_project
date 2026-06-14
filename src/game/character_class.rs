@@ -1,5 +1,6 @@
 use crate::game::combat_stats::CombatStats;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CharacterClass {
     Warrior,
     Mage,

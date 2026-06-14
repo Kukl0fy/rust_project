@@ -2,6 +2,7 @@ use crate::game::position::Position;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tile {
+    Void,
     Wall,
     Floor,
     Exit,
@@ -32,9 +33,20 @@ impl Map {
             return false;
         }
         match self.tile_at(pos) {
-            Some(Tile::Wall) => false,
-            _ => true,
+            Some(Tile::Floor) | Some(Tile::Exit) => true,
+            _ => false,
         }
+    }
+
+    pub fn is_floor_neighbor(&self, pos: Position, dx: i32, dy: i32) -> bool {
+        let neighbor = Position {
+            x: pos.x + dx,
+            y: pos.y + dy,
+        };
+        matches!(
+            self.tile_at(neighbor),
+            Some(Tile::Floor) | Some(Tile::Exit)
+        )
     }
 
     pub fn new(tiles: Vec<Vec<Tile>>) -> Self {

@@ -119,7 +119,7 @@ impl State {
                 Some(Tile::Wall) => '#',
                 Some(Tile::Floor) => '.',
                 Some(Tile::Exit) => 'D',
-                None => ' ',
+                Some(Tile::Void) | None => ' ',
             },
         }
     }

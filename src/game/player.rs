@@ -19,6 +19,10 @@ impl Player {
         self.pos
     }
 
+    pub fn class(&self) -> CharacterClass {
+        self.class
+    }
+
     pub fn set_pos(&mut self, pos: Position) {
         self.pos = pos;
     }
