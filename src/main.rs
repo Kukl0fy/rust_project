@@ -7,27 +7,10 @@ use game::character_class::CharacterClass;
 use game::level_generator::LevelGenerator;
 use game::player::Player;
 use game::state::State;
-<<<<<<< HEAD
-use gui::{conf, GuiRenderer, Hud, Menu, MenuState, AssetManager};
+use gui::{conf, AssetManager, GuiRenderer, Hud, Menu, MenuState};
 use macroquad::prelude::*;
 
 #[macroquad::main(conf)]
-=======
-use gui::GuiRenderer;
-use macroquad::prelude::*;
-
-fn window_conf() -> Conf {
-    Conf {
-        window_title: "Rust Pixel Dungeon".to_owned(),
-        window_width: 1280,
-        window_height: 720,
-        window_resizable: false,
-        ..Default::default()
-    }
-}
-
-#[macroquad::main(window_conf)]
->>>>>>> 2a6cf1c3bf4b1a05e48e269b4a3ab77adaccf443
 async fn main() {
     let level_generator = LevelGenerator::new(
         80,  // width
@@ -42,18 +25,13 @@ async fn main() {
         0.4, // chest_spawn_chance
     );
 
-<<<<<<< HEAD
     let (map, monsters, chests, player_start) = level_generator.generate_level().into_parts();
-=======
-    let (map, monsters, player_start) = level_generator.generate_level().into_parts();
->>>>>>> 2a6cf1c3bf4b1a05e48e269b4a3ab77adaccf443
     let mut state = State::new(
         map,
         Player::new(player_start, CharacterClass::Warrior),
         monsters,
         chests,
     );
-<<<<<<< HEAD
 
     let renderer = GuiRenderer::new();
     let hud = Hud::new(gui::WINDOW_WIDTH - 270.0, 10.0);
@@ -119,33 +97,6 @@ async fn main() {
             }
         }
 
-=======
-    let renderer = GuiRenderer::new();
-
-    loop {
-        // Handle input
-        if is_key_pressed(KeyCode::Escape) {
-            break;
-        }
-
-        // Handle arrow keys for movement
-        if is_key_pressed(KeyCode::Up) {
-            state.move_player(game::direction::Direction::Up);
-        }
-        if is_key_pressed(KeyCode::Down) {
-            state.move_player(game::direction::Direction::Down);
-        }
-        if is_key_pressed(KeyCode::Left) {
-            state.move_player(game::direction::Direction::Left);
-        }
-        if is_key_pressed(KeyCode::Right) {
-            state.move_player(game::direction::Direction::Right);
-        }
-
-        // Render the game
-        renderer.render(&state);
-
->>>>>>> 2a6cf1c3bf4b1a05e48e269b4a3ab77adaccf443
         next_frame().await;
     }
 }
