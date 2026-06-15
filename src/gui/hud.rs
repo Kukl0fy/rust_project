@@ -23,7 +23,7 @@ impl Hud {
             self.position_x,
             self.position_y,
             250.0,
-            200.0,
+            260.0,
             Color::new(0.1, 0.1, 0.1, 0.7),
         );
 
@@ -32,7 +32,7 @@ impl Hud {
             self.position_x,
             self.position_y,
             250.0,
-            200.0,
+            260.0,
             2.0,
             WHITE,
         );
@@ -67,6 +67,13 @@ impl Hud {
 
         let sp_defense_text = format!("SP DEF: {}", player.stats.sp_defense);
         draw_text(&sp_defense_text, text_x, text_y, 16.0, Color::new(0.8, 0.6, 1.0, 1.0));
+        text_y += line_height;
+
+        draw_text("---", text_x, text_y, 14.0, GRAY);
+        text_y += line_height;
+
+        let status = state.status_message();
+        draw_text(status, text_x, text_y, 14.0, LIGHTGRAY);
     }
 }
 

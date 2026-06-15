@@ -49,6 +49,18 @@ impl AssetManager {
                 "2D Pixel Dungeon Asset Pack/interface/arrow_3.png",
             )
             .await;
+        manager
+            .try_load(
+                "chest_closed",
+                "2D Pixel Dungeon Asset Pack/items and trap_animation/chest/chest_3.png",
+            )
+            .await;
+        manager
+            .try_load(
+                "chest_open",
+                "2D Pixel Dungeon Asset Pack/items and trap_animation/chest/chest_open_1.png",
+            )
+            .await;
 
         manager
     }
@@ -95,6 +107,25 @@ impl AssetManager {
                         tile_px,
                         tile_px,
                     )),
+                    rotation: 0.0,
+                    flip_x: false,
+                    flip_y: false,
+                    pivot: None,
+                },
+            );
+        }
+    }
+
+    pub fn draw_full_texture(&self, name: &str, x: f32, y: f32, size: f32) {
+        if let Some(texture) = self.textures.get(name) {
+            draw_texture_ex(
+                texture,
+                x,
+                y,
+                WHITE,
+                DrawTextureParams {
+                    dest_size: Some(Vec2::splat(size)),
+                    source: None,
                     rotation: 0.0,
                     flip_x: false,
                     flip_y: false,
