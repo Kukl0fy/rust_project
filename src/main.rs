@@ -7,7 +7,7 @@ use game::character_class::CharacterClass;
 use game::level_generator::LevelGenerator;
 use game::player::Player;
 use game::state::State;
-use gui::{conf, AssetManager, GuiRenderer, Hud, Menu, MenuState};
+use gui::{conf, AssetManager, BattleUi, GuiRenderer, Hud, Menu, MenuState};
 use macroquad::prelude::*;
 
 #[macroquad::main(conf)]
@@ -35,6 +35,7 @@ async fn main() {
 
     let renderer = GuiRenderer::new();
     let hud = Hud::new(gui::WINDOW_WIDTH - 270.0, 10.0);
+    let battle_ui = BattleUi;
     let mut menu = Menu::new();
     let asset_manager = AssetManager::new().await;
 
@@ -51,7 +52,11 @@ async fn main() {
             }
             MenuState::Playing => {
                 renderer.render(&state, &asset_manager);
-                hud.render(&state);
+                if state.is_in_combat() {
+                    battle_ui.render(&state, &asset_manager);
+                } else {
+                    hud.render(&state);
+                }
 
                 if is_key_pressed(KeyCode::Up) {
                     state.move_player(game::direction::Direction::Up);
@@ -73,7 +78,11 @@ async fn main() {
             }
             MenuState::PauseMenu => {
                 renderer.render(&state, &asset_manager);
-                hud.render(&state);
+                if state.is_in_combat() {
+                    battle_ui.render(&state, &asset_manager);
+                } else {
+                    hud.render(&state);
+                }
                 menu.render_pause_menu();
 
                 if is_key_pressed(KeyCode::P) {

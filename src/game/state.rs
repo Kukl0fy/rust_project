@@ -66,6 +66,17 @@ impl State {
         &self.status_message
     }
 
+    pub fn is_in_combat(&self) -> bool {
+        matches!(self.mode, GameMode::Combat { .. })
+    }
+
+    pub fn combat_monster(&self) -> Option<&Monster> {
+        match &self.mode {
+            GameMode::Combat { monster_index, .. } => self.entities.get(*monster_index),
+            _ => None,
+        }
+    }
+
     pub fn is_room_cleared(&self, room_index: usize) -> bool {
         !self
             .entities

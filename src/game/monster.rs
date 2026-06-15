@@ -44,7 +44,7 @@ impl MonsterType {
                 attack: 10,
                 defense: 5,
                 sp_attack: 15,
-                sp_defense: 10,
+                sp_defense: 6,
             },
             MonsterType::Vampire => CombatStats {
                 hp: 40,
@@ -52,7 +52,7 @@ impl MonsterType {
                 attack: 8,
                 defense: 3,
                 sp_attack: 12,
-                sp_defense: 8,
+                sp_defense: 4,
             }
         }
     }
