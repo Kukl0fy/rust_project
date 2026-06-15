@@ -46,6 +46,53 @@ impl ItemEffect {
             ItemEffect::BoostSpDefense(_) => "wiecej obrony spec.",
         }
     }
+
+    pub fn detail(&self) -> String {
+        match self {
+            ItemEffect::Heal(amount) => format!("+{amount} HP"),
+            ItemEffect::BoostMaxHp(amount) => format!("+{amount} maks. HP"),
+            ItemEffect::BoostAttack(amount) => format!("+{amount} ATK"),
+            ItemEffect::BoostDefense(amount) => format!("+{amount} DEF"),
+            ItemEffect::BoostSpAttack(amount) => format!("+{amount} SP ATK"),
+            ItemEffect::BoostSpDefense(amount) => format!("+{amount} SP DEF"),
+        }
+    }
+
+    pub fn result_message(&self, item_name: &str, stats: &CombatStats) -> String {
+        match self {
+            ItemEffect::Heal(_) => {
+                format!("{item_name}: {} (HP: {}/{})", self.detail(), stats.hp, stats.max_hp)
+            }
+            ItemEffect::BoostMaxHp(_) => {
+                format!(
+                    "{item_name}: {} (HP: {}/{})",
+                    self.detail(),
+                    stats.hp,
+                    stats.max_hp
+                )
+            }
+            ItemEffect::BoostAttack(_) => {
+                format!("{item_name}: {} (ATK: {})", self.detail(), stats.attack)
+            }
+            ItemEffect::BoostDefense(_) => {
+                format!("{item_name}: {} (DEF: {})", self.detail(), stats.defense)
+            }
+            ItemEffect::BoostSpAttack(_) => {
+                format!(
+                    "{item_name}: {} (SP ATK: {})",
+                    self.detail(),
+                    stats.sp_attack
+                )
+            }
+            ItemEffect::BoostSpDefense(_) => {
+                format!(
+                    "{item_name}: {} (SP DEF: {})",
+                    self.detail(),
+                    stats.sp_defense
+                )
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -150,6 +197,13 @@ mod tests {
         ItemEffect::BoostMaxHp(20).apply(&mut stats);
         assert_eq!(stats.max_hp, 120);
         assert_eq!(stats.hp, 60);
+    }
+
+    #[test]
+    fn boost_attack_increases_attack() {
+        let mut stats = sample_stats();
+        ItemEffect::BoostAttack(4).apply(&mut stats);
+        assert_eq!(stats.attack, 14);
     }
 
     #[test]

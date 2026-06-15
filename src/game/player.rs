@@ -15,6 +15,10 @@ impl Player {
         Self { pos, class, stats }
     }
 
+    pub fn with_stats(pos: Position, class: CharacterClass, stats: CombatStats) -> Self {
+        Self { pos, class, stats }
+    }
+
     pub fn pos(&self) -> Position {
         self.pos
     }

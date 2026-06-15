@@ -1,5 +1,6 @@
 use macroquad::prelude::*;
 use crate::game::state::State;
+use super::WINDOW_HEIGHT;
 
 pub struct Hud {
     position_x: f32,
@@ -23,7 +24,7 @@ impl Hud {
             self.position_x,
             self.position_y,
             250.0,
-            260.0,
+            285.0,
             Color::new(0.1, 0.1, 0.1, 0.7),
         );
 
@@ -32,7 +33,7 @@ impl Hud {
             self.position_x,
             self.position_y,
             250.0,
-            260.0,
+            285.0,
             2.0,
             WHITE,
         );
@@ -43,6 +44,10 @@ impl Hud {
 
         // Title
         draw_text("PLAYER STATS", text_x, text_y, 18.0, YELLOW);
+        text_y += line_height;
+
+        let level_text = format!("POZIOM: {}", state.level_depth());
+        draw_text(&level_text, text_x, text_y, 16.0, ORANGE);
         text_y += line_height;
 
         // Health
@@ -74,6 +79,31 @@ impl Hud {
 
         let status = state.status_message();
         draw_text(status, text_x, text_y, 14.0, LIGHTGRAY);
+
+        Self::render_loot_panel(state);
+    }
+
+    pub fn render_loot(state: &State) {
+        Self::render_loot_panel(state);
+    }
+
+    fn render_loot_panel(state: &State) {
+        let Some((name, effect)) = state.last_loot() else {
+            return;
+        };
+
+        let panel_w = 280.0;
+        let panel_h = 72.0;
+        let x = 10.0;
+        let y = WINDOW_HEIGHT - panel_h - 10.0;
+
+        draw_rectangle(x, y, panel_w, panel_h, Color::new(0.1, 0.1, 0.1, 0.85));
+        draw_rectangle_lines(x, y, panel_w, panel_h, 2.0, Color::new(1.0, 0.85, 0.3, 1.0));
+
+        let text_x = x + 12.0;
+        draw_text("OSTATNI LOOT", text_x, y + 20.0, 14.0, YELLOW);
+        draw_text(name, text_x, y + 40.0, 16.0, WHITE);
+        draw_text(&format!("Efekt: {effect}"), text_x, y + 60.0, 14.0, LIME);
     }
 }
 

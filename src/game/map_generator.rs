@@ -10,6 +10,7 @@ pub struct MapGenerationResult {
     pub player_start: Position,
     pub rooms: Vec<Room>,
     pub start_room_index: usize,
+    pub exit_room_index: usize,
 }
 
 pub struct MapGenerator {
@@ -111,6 +112,7 @@ impl MapGenerator {
             room.carve_room(&mut tiles);
         }
 
+        let exit_room_index = Self::farthest_room_index(&raw_rooms, 0);
         self.connect_all_rooms(&mut tiles, &raw_rooms);
         Self::place_walls(&mut tiles);
 
@@ -125,11 +127,19 @@ impl MapGenerator {
             .map(|room| room.center())
             .unwrap_or(Position { x: 0, y: 0 });
 
+        let mut map = Map::new(tiles);
+        let ladder_pos = rooms
+            .get(exit_room_index)
+            .map(Self::ladder_position_in_room)
+            .unwrap_or(player_start);
+        map.set_tile(ladder_pos, Tile::Ladder);
+
         MapGenerationResult {
-            map: Map::new(tiles),
+            map,
             player_start,
             rooms,
             start_room_index: 0,
+            exit_room_index,
         }
     }
 
@@ -196,16 +206,16 @@ impl MapGenerator {
         width: usize,
         height: usize,
     ) -> bool {
-        if x > 0 && matches!(tiles[y][x - 1], Tile::Floor | Tile::Exit) {
+        if x > 0 && matches!(tiles[y][x - 1], Tile::Floor | Tile::Exit | Tile::Ladder) {
             return true;
         }
-        if x + 1 < width && matches!(tiles[y][x + 1], Tile::Floor | Tile::Exit) {
+        if x + 1 < width && matches!(tiles[y][x + 1], Tile::Floor | Tile::Exit | Tile::Ladder) {
             return true;
         }
-        if y > 0 && matches!(tiles[y - 1][x], Tile::Floor | Tile::Exit) {
+        if y > 0 && matches!(tiles[y - 1][x], Tile::Floor | Tile::Exit | Tile::Ladder) {
             return true;
         }
-        if y + 1 < height && matches!(tiles[y + 1][x], Tile::Floor | Tile::Exit) {
+        if y + 1 < height && matches!(tiles[y + 1][x], Tile::Floor | Tile::Exit | Tile::Ladder) {
             return true;
         }
         false
@@ -242,6 +252,35 @@ impl MapGenerator {
                 &rooms[new_room_index],
             );
             connected.push(new_room_index);
+        }
+    }
+
+    fn farthest_room_index(rooms: &[RawRoom], start_index: usize) -> usize {
+        if rooms.is_empty() {
+            return 0;
+        }
+        let (sx, sy) = rooms[start_index].center();
+        rooms
+            .iter()
+            .enumerate()
+            .max_by_key(|(_, room)| {
+                let (rx, ry) = room.center();
+                rx.abs_diff(sx) + ry.abs_diff(sy)
+            })
+            .map(|(index, _)| index)
+            .unwrap_or(0)
+    }
+
+    fn ladder_position_in_room(room: &Room) -> Position {
+        let center = room.center();
+        let below = Position {
+            x: center.x,
+            y: center.y + 1,
+        };
+        if room.contains(below) {
+            below
+        } else {
+            center
         }
     }
 }
