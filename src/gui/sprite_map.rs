@@ -56,8 +56,8 @@ pub fn wall_draw(map: &Map, pos: Position) -> WallDraw {
 
 pub fn tile_for(map: &Map, pos: Position) -> TileCoord {
     match map.tile_at(pos) {
-        Some(Tile::Floor) | Some(Tile::Exit) => floor_tile(pos),
-        Some(Tile::Wall) => wall_tile(map, pos),
+        Some(Tile::Floor) | Some(Tile::Exit) | Some(Tile::Ladder) => floor_tile(pos),
+        Some(Tile::Wall) => wall_tile(map, pos).tile,
         Some(Tile::Void) | None => FLOOR_A,
     }
 }
@@ -83,81 +83,67 @@ fn wall_tile(map: &Map, pos: Position) -> WallDraw {
     let s = map.is_floor_neighbor(pos, 0, 1);
     let e = map.is_floor_neighbor(pos, 1, 0);
     let w = map.is_floor_neighbor(pos, -1, 0);
-    // Outer corners
     if s && e && !n && !w {
-        return WALL_NW;
+        return WallDraw::new(WALL_NW, false);
     }
     if s && w && !n && !e {
-        return WALL_NE;
+        return WallDraw::new(WALL_NE, false);
     }
     if n && e && !s && !w {
-        return WALL_SW;
+        return WallDraw::new(WALL_SW, false);
     }
     if n && w && !s && !e {
-        return WALL_SE;
+        return WallDraw::new(WALL_SE, false);
     }
 
-    // North edge — floor to the south (front-facing brick)
     if s && !n {
-        if e && w {
-            return pick_n_wall(map, pos);
-        }
-        if !e && !w {
-            return pick_n_wall(map, pos);
-        }
+        return pick_n_wall(map, pos);
+    }
+    if n && !s {
+        return pick_s_wall(map, pos);
+    }
+    if e && !w {
+        return pick_w_wall(map, pos);
+    }
+    if w && !e {
+        return pick_e_wall(map, pos);
     }
 
-        // Proste krawedzie
-        0b0010 => shadow_n(pick_n_wall(map, pos), void_n),
-        0b0001 => pick_s_wall(map, pos),
-        0b0100 => pick_w_wall(map, pos),
-        0b1000 => pick_e_wall(map, pos),
-
-        // Dzielnik poziomy (podloga na polnocy i poludniu)
-        0b0011 => pick_s_wall(map, pos),
-
-        // Dzielnik pionowy (podloga na wschodzie i zachodzie)
-        0b1100 => pick_e_wall(map, pos),
-
-        // T-rozwidlelnia i wiecej sasiedow
-        0b1110 => shadow_n(WallDraw::new(WALL_N, false), void_n),
-        0b0111 => shadow_n(WallDraw::new(WALL_N, false), void_n),
-        0b1011 => shadow_n(WallDraw::new(WALL_N, false), void_n),
-        0b1101 => WallDraw::new(WALL_S, false),
-        0b1111 => WallDraw::new(WALL_S, false),
-
-        _ => shadow_n(WallDraw::new(WALL_N, false), void_n),
+    if n && s && !e && !w {
+        return pick_s_wall(map, pos);
     }
-}
+    if e && w && !n && !s {
+        return pick_e_wall(map, pos);
+    }
 
-    // T-junctions: open side faces void
     if s && e && w && !n {
-        return WALL_N;
+        return WallDraw::new(WALL_N, false);
     }
     if n && e && w && !s {
-        return WALL_S;
+        return WallDraw::new(WALL_S, false);
     }
-    let tile = match draw.tile {
-        WALL_NW => WALL_NW_SHADOW,
-        WALL_N => WALL_N_SHADOW,
-        WALL_N_MID => WALL_N_MID_SHADOW,
-        WALL_NE => WALL_NE_SHADOW,
-        _ => WALL_N_SHADOW,
-    };
-    WallDraw::new(tile, draw.flip_x)
+    if n && s && w && !e {
+        return pick_e_wall(map, pos);
+    }
+    if n && s && e && !w {
+        return pick_w_wall(map, pos);
+    }
+
+    WallDraw::new(WALL_N, false)
 }
 
-fn pick_n_wall(map: &Map, pos: Position) -> TileCoord {
+fn pick_n_wall(map: &Map, pos: Position) -> WallDraw {
     let continues_w = same_north_wall(map, pos, -1, 0);
     let continues_e = same_north_wall(map, pos, 1, 0);
 
-    if !continues_w {
+    let tile = if !continues_w {
         WALL_N
     } else if !continues_e {
         WALL_N_MID
     } else {
         WALL_N_MID
-    }
+    };
+    WallDraw::new(tile, false)
 }
 
 fn pick_s_wall(map: &Map, pos: Position) -> WallDraw {

@@ -6,7 +6,7 @@ mod ui;
 use game::character_class::CharacterClass;
 use game::level_generator::LevelGenerator;
 use game::player::Player;
-use game::state::State;
+use game::state::{MoveResult, State};
 use gui::{conf, AssetManager, BattleUi, GuiRenderer, Hud, Menu, MenuState, MusicManager};
 use macroquad::prelude::*;
 
