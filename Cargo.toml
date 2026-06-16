@@ -6,4 +6,6 @@ edition = "2021"
 [dependencies]
 crossterm = "0.29"
 rand = "0.10"
-macroquad = "0.4"
+macroquad = { version = "0.4", features = ["audio"] }
+hound = "3.5"
+minimp3 = "0.5"

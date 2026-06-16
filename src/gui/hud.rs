@@ -12,6 +12,10 @@ impl Hud {
     }
 
     pub fn render(&self, state: &State) {
+        if state.is_in_combat() {
+            return;
+        }
+
         let player = state.player();
         
         // Semi-transparent background for HUD
@@ -19,7 +23,7 @@ impl Hud {
             self.position_x,
             self.position_y,
             250.0,
-            150.0,
+            260.0,
             Color::new(0.1, 0.1, 0.1, 0.7),
         );
 
@@ -28,7 +32,7 @@ impl Hud {
             self.position_x,
             self.position_y,
             250.0,
-            150.0,
+            260.0,
             2.0,
             WHITE,
         );
@@ -54,6 +58,22 @@ impl Hud {
         // Defense
         let defense_text = format!("DEF: {}", player.stats.defense);
         draw_text(&defense_text, text_x, text_y, 16.0, WHITE);
+        text_y += line_height;
+
+        // Special attack / defense
+        let sp_attack_text = format!("SP ATK: {}", player.stats.sp_attack);
+        draw_text(&sp_attack_text, text_x, text_y, 16.0, Color::new(1.0, 0.5, 1.0, 1.0));
+        text_y += line_height;
+
+        let sp_defense_text = format!("SP DEF: {}", player.stats.sp_defense);
+        draw_text(&sp_defense_text, text_x, text_y, 16.0, Color::new(0.8, 0.6, 1.0, 1.0));
+        text_y += line_height;
+
+        draw_text("---", text_x, text_y, 14.0, GRAY);
+        text_y += line_height;
+
+        let status = state.status_message();
+        draw_text(status, text_x, text_y, 14.0, LIGHTGRAY);
     }
 }
 

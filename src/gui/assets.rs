@@ -13,21 +13,54 @@ impl AssetManager {
             textures: HashMap::new(),
         };
 
-        manager.try_load(
-            "tileset",
-            "2D Pixel Dungeon Asset Pack/character and tileset/Dungeon_Tileset.png",
-        )
-        .await;
-        manager.try_load(
-            "characters",
-            "2D Pixel Dungeon Asset Pack/character and tileset/Dungeon_Character.png",
-        )
-        .await;
-        manager.try_load(
-            "ui_square",
-            "2D Pixel Dungeon Asset Pack/interface/square_left_1.png",
-        )
-        .await;
+        manager
+            .try_load(
+                "tileset",
+                "2D Pixel Dungeon Asset Pack/character and tileset/Dungeon_Tileset.png",
+            )
+            .await;
+        manager
+            .try_load(
+                "characters",
+                "2D Pixel Dungeon Asset Pack/character and tileset/Dungeon_Character.png",
+            )
+            .await;
+        manager
+            .try_load(
+                "ui_square",
+                "2D Pixel Dungeon Asset Pack/interface/square_left_1.png",
+            )
+            .await;
+        manager
+            .try_load(
+                "arrow_up",
+                "2D Pixel Dungeon Asset Pack/interface/arrow_4.png",
+            )
+            .await;
+        manager
+            .try_load(
+                "arrow_down",
+                "2D Pixel Dungeon Asset Pack/interface/arrow_2.png",
+            )
+            .await;
+        manager
+            .try_load(
+                "arrow_left",
+                "2D Pixel Dungeon Asset Pack/interface/arrow_3.png",
+            )
+            .await;
+        manager
+            .try_load(
+                "chest_closed",
+                "2D Pixel Dungeon Asset Pack/items and trap_animation/chest/chest_3.png",
+            )
+            .await;
+        manager
+            .try_load(
+                "chest_open",
+                "2D Pixel Dungeon Asset Pack/items and trap_animation/chest/chest_open_1.png",
+            )
+            .await;
 
         manager
     }
@@ -78,6 +111,45 @@ impl AssetManager {
                     flip_x: false,
                     flip_y: false,
                     pivot: None,
+                },
+            );
+        }
+    }
+
+    pub fn draw_full_texture(&self, name: &str, x: f32, y: f32, size: f32) {
+        if let Some(texture) = self.textures.get(name) {
+            draw_texture_ex(
+                texture,
+                x,
+                y,
+                WHITE,
+                DrawTextureParams {
+                    dest_size: Some(Vec2::splat(size)),
+                    source: None,
+                    rotation: 0.0,
+                    flip_x: false,
+                    flip_y: false,
+                    pivot: None,
+                },
+            );
+        }
+    }
+
+    pub fn draw_icon(&self, name: &str, x: f32, y: f32, size: f32, rotation: f32) {
+        if let Some(texture) = self.textures.get(name) {
+            let pivot = Vec2::new(size / 2.0, size / 2.0);
+            draw_texture_ex(
+                texture,
+                x,
+                y,
+                WHITE,
+                DrawTextureParams {
+                    dest_size: Some(Vec2::splat(size)),
+                    source: None,
+                    rotation,
+                    flip_x: false,
+                    flip_y: false,
+                    pivot: Some(pivot),
                 },
             );
         }

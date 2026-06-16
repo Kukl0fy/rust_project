@@ -81,6 +81,15 @@ impl GuiRenderer {
             }
         }
 
+        for chest in state.chests() {
+            if chest.is_open() {
+                continue;
+            }
+            let dest_x = chest.pos().x as f32 * TILE_SIZE - cam_x;
+            let dest_y = chest.pos().y as f32 * TILE_SIZE - cam_y;
+            assets.draw_full_texture("chest_closed", dest_x, dest_y, TILE_SIZE);
+        }
+
         for monster in state.entities() {
             draw_entity(
                 assets,
