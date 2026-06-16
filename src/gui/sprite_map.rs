@@ -15,29 +15,24 @@ impl TileCoord {
     }
 }
 
-// Sample room in the top-left of Dungeon_Tileset.png (160x160, 16px grid).
-const FLOOR_A: TileCoord = TileCoord::new(1, 1);
-const FLOOR_B: TileCoord = TileCoord::new(2, 2);
-const FLOOR_C: TileCoord = TileCoord::new(3, 3);
+const FLOOR_A: TileCoord = TileCoord::new(6, 0);
+const FLOOR_B: TileCoord = TileCoord::new(6, 1);
+const FLOOR_C: TileCoord = TileCoord::new(7, 0);
 
 const WALL_NW: TileCoord = TileCoord::new(0, 0);
 const WALL_N: TileCoord = TileCoord::new(1, 0);
 const WALL_N_MID: TileCoord = TileCoord::new(2, 0);
 const WALL_NE: TileCoord = TileCoord::new(3, 0);
-const WALL_NW_SHADOW: TileCoord = TileCoord::new(0, 5);
-const WALL_N_SHADOW: TileCoord = TileCoord::new(1, 5);
-const WALL_N_MID_SHADOW: TileCoord = TileCoord::new(2, 5);
-const WALL_NE_SHADOW: TileCoord = TileCoord::new(3, 5);
 
 const WALL_W_TOP: TileCoord = TileCoord::new(0, 1);
 const WALL_W: TileCoord = TileCoord::new(0, 2);
 const WALL_W_BOT: TileCoord = TileCoord::new(0, 3);
 
-const WALL_E_TOP: TileCoord = TileCoord::new(4, 1);
-const WALL_E: TileCoord = TileCoord::new(4, 2);
-const WALL_E_BOT: TileCoord = TileCoord::new(4, 3);
+const WALL_E_TOP: TileCoord = TileCoord::new(5, 0);
+const WALL_E: TileCoord = TileCoord::new(5, 1);
+const WALL_E_BOT: TileCoord = TileCoord::new(5, 3);
 
-const WALL_SW: TileCoord = TileCoord::new(0, 4);
+const WALL_SW: TileCoord = TileCoord::new(3, 5);
 const WALL_S: TileCoord = TileCoord::new(1, 4);
 const WALL_S_MID: TileCoord = TileCoord::new(2, 4);
 const WALL_S_RIGHT: TileCoord = TileCoord::new(3, 4);
@@ -47,7 +42,7 @@ pub fn tile_for(map: &Map, pos: Position) -> TileCoord {
     match map.tile_at(pos) {
         Some(Tile::Floor) | Some(Tile::Exit) => floor_tile(pos),
         Some(Tile::Wall) => wall_tile(map, pos),
-        Some(Tile::Void) | None => FLOOR_A, // void is drawn as solid color in renderer
+        Some(Tile::Void) | None => FLOOR_A,
     }
 }
 
@@ -62,14 +57,12 @@ fn wall_tile(map: &Map, pos: Position) -> TileCoord {
     let s = map.is_floor_neighbor(pos, 0, 1);
     let e = map.is_floor_neighbor(pos, 1, 0);
     let w = map.is_floor_neighbor(pos, -1, 0);
-    let void_n = is_void_neighbor(map, pos, 0, -1);
-
     // Outer corners
     if s && e && !n && !w {
-        return if void_n { WALL_NW_SHADOW } else { WALL_NW };
+        return WALL_NW;
     }
     if s && w && !n && !e {
-        return if void_n { WALL_NE_SHADOW } else { WALL_NE };
+        return WALL_NE;
     }
     if n && e && !s && !w {
         return WALL_SW;
@@ -81,10 +74,10 @@ fn wall_tile(map: &Map, pos: Position) -> TileCoord {
     // North edge — floor to the south (front-facing brick)
     if s && !n {
         if e && w {
-            return pick_n_wall(map, pos, void_n);
+            return pick_n_wall(map, pos);
         }
         if !e && !w {
-            return pick_n_wall(map, pos, void_n);
+            return pick_n_wall(map, pos);
         }
     }
 
@@ -130,7 +123,7 @@ fn wall_tile(map: &Map, pos: Position) -> TileCoord {
 
     // T-junctions: open side faces void
     if s && e && w && !n {
-        return if void_n { WALL_N_SHADOW } else { WALL_N };
+        return WALL_N;
     }
     if n && e && w && !s {
         return WALL_S;
@@ -145,26 +138,16 @@ fn wall_tile(map: &Map, pos: Position) -> TileCoord {
     WALL_N
 }
 
-fn pick_n_wall(map: &Map, pos: Position, void_n: bool) -> TileCoord {
+fn pick_n_wall(map: &Map, pos: Position) -> TileCoord {
     let continues_w = same_north_wall(map, pos, -1, 0);
     let continues_e = same_north_wall(map, pos, 1, 0);
 
-    let tile = if !continues_w {
+    if !continues_w {
         WALL_N
     } else if !continues_e {
         WALL_N_MID
     } else {
         WALL_N_MID
-    };
-
-    if void_n {
-        match tile {
-            WALL_N => WALL_N_SHADOW,
-            WALL_N_MID => WALL_N_MID_SHADOW,
-            _ => WALL_N_SHADOW,
-        }
-    } else {
-        tile
     }
 }
 
@@ -242,6 +225,3 @@ fn offset(pos: Position, dx: i32, dy: i32) -> Position {
     }
 }
 
-fn is_void_neighbor(map: &Map, pos: Position, dx: i32, dy: i32) -> bool {
-    matches!(map.tile_at(offset(pos, dx, dy)), Some(Tile::Void) | None)
-}

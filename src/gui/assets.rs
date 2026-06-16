@@ -40,7 +40,7 @@ impl AssetManager {
         manager
             .try_load(
                 "arrow_down",
-                "2D Pixel Dungeon Asset Pack/interface/arrow_1.png",
+                "2D Pixel Dungeon Asset Pack/interface/arrow_2.png",
             )
             .await;
         manager
