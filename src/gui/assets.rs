@@ -34,13 +34,13 @@ impl AssetManager {
         manager
             .try_load(
                 "arrow_up",
-                "2D Pixel Dungeon Asset Pack/interface/arrow_4.png",
+                "2D Pixel Dungeon Asset Pack/interface/arrow_2.png",
             )
             .await;
         manager
             .try_load(
                 "arrow_down",
-                "2D Pixel Dungeon Asset Pack/interface/arrow_2.png",
+                "2D Pixel Dungeon Asset Pack/interface/arrow_1.png",
             )
             .await;
         manager
