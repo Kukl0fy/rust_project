@@ -17,6 +17,8 @@ pub struct Level {
     monsters: Vec<Monster>,
     chests: Vec<Chest>,
     player_start: Position,
+    ladder_pos: Position,
+    exit_room_index: usize,
 }
 
 impl Level {
@@ -36,8 +38,25 @@ impl Level {
         self.player_start
     }
 
-    pub fn into_parts(self) -> (Map, Vec<Monster>, Vec<Chest>, Position) {
-        (self.map, self.monsters, self.chests, self.player_start)
+    pub fn ladder_pos(&self) -> Position {
+        self.ladder_pos
+    }
+
+    pub fn exit_room_index(&self) -> usize {
+        self.exit_room_index
+    }
+
+    pub fn into_parts(
+        self,
+    ) -> (Map, Vec<Monster>, Vec<Chest>, Position, Position, usize) {
+        (
+            self.map,
+            self.monsters,
+            self.chests,
+            self.player_start,
+            self.ladder_pos,
+            self.exit_room_index,
+        )
     }
 }
 
@@ -75,6 +94,22 @@ impl LevelGenerator {
     pub fn generate_level(&self) -> Level {
         let map_generator = MapGenerator::new(self.map_config.clone());
         let map_result = map_generator.generate_map();
+        let ladder_pos = map_result
+            .rooms
+            .get(map_result.exit_room_index)
+            .map(|room| {
+                let center = room.center();
+                let below = Position {
+                    x: center.x,
+                    y: center.y + 1,
+                };
+                if room.contains(below) {
+                    below
+                } else {
+                    center
+                }
+            })
+            .unwrap_or(map_result.player_start);
 
         let entity_generator = EntitiesGenerator::new(self.entity_config.clone());
         let entities = entity_generator.generate_entities(
@@ -82,13 +117,18 @@ impl LevelGenerator {
             map_result.start_room_index,
             map_result.player_start,
         );
-        let (monsters, chests) = entities.into_parts();
+        let (mut monsters, mut chests) = entities.into_parts();
+
+        monsters.retain(|m| m.pos() != ladder_pos);
+        chests.retain(|c| c.pos() != ladder_pos);
 
         Level {
             map: map_result.map,
             monsters,
             chests,
             player_start: map_result.player_start,
+            ladder_pos,
+            exit_room_index: map_result.exit_room_index,
         }
     }
 }

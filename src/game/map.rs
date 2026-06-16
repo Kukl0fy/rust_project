@@ -6,6 +6,7 @@ pub enum Tile {
     Wall,
     Floor,
     Exit,
+    Ladder,
 }
 
 #[derive(Clone)]
@@ -33,7 +34,7 @@ impl Map {
             return false;
         }
         match self.tile_at(pos) {
-            Some(Tile::Floor) | Some(Tile::Exit) => true,
+            Some(Tile::Floor) | Some(Tile::Exit) | Some(Tile::Ladder) => true,
             _ => false,
         }
     }
@@ -45,7 +46,7 @@ impl Map {
         };
         matches!(
             self.tile_at(neighbor),
-            Some(Tile::Floor) | Some(Tile::Exit)
+            Some(Tile::Floor) | Some(Tile::Exit) | Some(Tile::Ladder)
         )
     }
 
@@ -66,5 +67,11 @@ impl Map {
 
     pub fn width(&self) -> usize {
         self.width
+    }
+
+    pub fn set_tile(&mut self, pos: Position, tile: Tile) {
+        if self.validate_pos(pos) {
+            self.tiles[pos.y as usize][pos.x as usize] = tile;
+        }
     }
 }

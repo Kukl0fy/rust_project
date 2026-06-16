@@ -5,15 +5,14 @@ use crate::game::position::Position;
 use crate::game::state::State;
 
 use super::assets::AssetManager;
-use super::sprite_entities::{player_sprite, monster_sprite, CHARACTER_TILE_PX};
-use super::sprite_map::tile_for;
+use super::sprite_entities::{monster_sprite, player_sprite, CHARACTER_TILE_PX};
+use super::sprite_map::{floor_tile, floor_under_wall, wall_draw};
 use super::TILE_SIZE;
 
 const WINDOW_WIDTH: f32 = 1280.0;
 const WINDOW_HEIGHT: f32 = 720.0;
 const MAP_VIEW_HEIGHT: f32 = 680.0;
 
-// Dark purple from the tileset background — not a labeled tile from the sheet.
 const VOID_COLOR: Color = Color::new(0.07, 0.04, 0.08, 1.0);
 
 pub fn conf() -> Conf {
@@ -45,6 +44,7 @@ impl GuiRenderer {
         let start_x = (cam_x / TILE_SIZE).floor() as i32;
         let start_y = (cam_y / TILE_SIZE).floor() as i32;
 
+        // Pass 1: void + podloga (takze pod scianami)
         for screen_y in 0..view_tiles_y {
             for screen_x in 0..view_tiles_x {
                 let map_x = start_x + screen_x;
@@ -55,10 +55,7 @@ impl GuiRenderer {
                     continue;
                 }
 
-                let pos = Position {
-                    x: map_x,
-                    y: map_y,
-                };
+                let pos = Position { x: map_x, y: map_y };
                 let dest_x = map_x as f32 * TILE_SIZE - cam_x;
                 let dest_y = map_y as f32 * TILE_SIZE - cam_y;
 
@@ -66,19 +63,61 @@ impl GuiRenderer {
                     Some(Tile::Void) | None => {
                         draw_rectangle(dest_x, dest_y, TILE_SIZE, TILE_SIZE, VOID_COLOR);
                     }
-                    Some(Tile::Wall) | Some(Tile::Floor) | Some(Tile::Exit) => {
-                        let tile = tile_for(map, pos);
-                        assets.draw_tile(
-                            "tileset",
-                            tile,
-                            dest_x,
-                            dest_y,
-                            TILE_SIZE,
-                            super::sprite_map::TILESET_TILE_PX,
-                        );
+                    Some(Tile::Floor) | Some(Tile::Exit) | Some(Tile::Ladder) => {
+                        draw_floor(assets, floor_tile(pos), dest_x, dest_y);
+                    }
+                    Some(Tile::Wall) => {
+                        draw_floor(assets, floor_under_wall(map, pos), dest_x, dest_y);
                     }
                 }
             }
+        }
+
+        // Pass 2: sciany na wierzchu
+        for screen_y in 0..view_tiles_y {
+            for screen_x in 0..view_tiles_x {
+                let map_x = start_x + screen_x;
+                let map_y = start_y + screen_y;
+
+                if map_x < 0 || map_y < 0 || map_x >= map.width() as i32 || map_y >= map.height() as i32
+                {
+                    continue;
+                }
+
+                let pos = Position { x: map_x, y: map_y };
+                if !matches!(map.tile_at(pos), Some(Tile::Wall)) {
+                    continue;
+                }
+
+                let dest_x = map_x as f32 * TILE_SIZE - cam_x;
+                let dest_y = map_y as f32 * TILE_SIZE - cam_y;
+                let wall = wall_draw(map, pos);
+                assets.draw_sprite(
+                    "tileset",
+                    wall.tile,
+                    dest_x,
+                    dest_y,
+                    TILE_SIZE,
+                    super::sprite_map::TILESET_TILE_PX,
+                    wall.flip_x,
+                );
+            }
+        }
+
+        let ladder = state.ladder_pos();
+        if matches!(map.tile_at(ladder), Some(Tile::Ladder)) {
+            let dest_x = ladder.x as f32 * TILE_SIZE - cam_x;
+            let dest_y = ladder.y as f32 * TILE_SIZE - cam_y;
+
+            draw_rectangle_lines(
+                dest_x + 1.0,
+                dest_y + 1.0,
+                TILE_SIZE - 2.0,
+                TILE_SIZE - 2.0,
+                1.5,
+                Color::new(1.0, 0.85, 0.2, 0.7),
+            );
+            assets.draw_full_texture("ladder", dest_x, dest_y, TILE_SIZE);
         }
 
         for chest in state.chests() {
@@ -110,6 +149,17 @@ impl GuiRenderer {
     }
 }
 
+fn draw_floor(assets: &AssetManager, tile: super::sprite_map::TileCoord, dest_x: f32, dest_y: f32) {
+    assets.draw_tile(
+        "tileset",
+        tile,
+        dest_x,
+        dest_y,
+        TILE_SIZE,
+        super::sprite_map::TILESET_TILE_PX,
+    );
+}
+
 fn draw_entity(
     assets: &AssetManager,
     pos: Position,
@@ -126,6 +176,7 @@ fn draw_entity(
         dest_y,
         TILE_SIZE,
         CHARACTER_TILE_PX,
+        false,
     );
 }
 

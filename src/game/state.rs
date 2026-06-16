@@ -1,4 +1,4 @@
-use crate::game::chest::Chest;
+use crate::game::chest::{Chest, ItemEffect};
 use crate::game::combat::{self, CombatOutcome};
 use crate::game::direction::Direction;
 use crate::game::map::Map;
@@ -7,6 +7,10 @@ use crate::game::monster::Monster;
 use crate::game::object::Object;
 use crate::game::player::Player;
 use crate::game::position::Position;
+use rand::RngExt;
+
+const MONSTER_HEAL_DROP_CHANCE: f64 = 0.35;
+const MONSTER_HEAL_AMOUNT: i32 = 20;
 
 pub enum GameMode {
     Exploration,
@@ -16,6 +20,13 @@ pub enum GameMode {
     },
 }
 
+use crate::game::level_generator::Level;
+
+pub enum MoveResult {
+    Normal,
+    DescendLevel,
+}
+
 pub struct State {
     map: Map,
     player: Player,
@@ -23,6 +34,11 @@ pub struct State {
     entities: Vec<Monster>,
     chests: Vec<Chest>,
     status_message: String,
+    last_loot_name: Option<String>,
+    last_loot_effect: Option<String>,
+    level_depth: u32,
+    ladder_pos: Position,
+    exit_room_index: usize,
 }
 
 impl State {
@@ -31,6 +47,8 @@ impl State {
         player: Player,
         entities: Vec<Monster>,
         chests: Vec<Chest>,
+        ladder_pos: Position,
+        exit_room_index: usize,
     ) -> Self {
         Self {
             map,
@@ -38,8 +56,40 @@ impl State {
             mode: GameMode::Exploration,
             entities,
             chests,
-            status_message: "Witaj w lochu. M = potwor, C = skrzynka.".to_string(),
+            status_message: "Witaj w lochu. Pokonaj wszystkie potwory i znajdz drabine.".to_string(),
+            last_loot_name: None,
+            last_loot_effect: None,
+            level_depth: 1,
+            ladder_pos,
+            exit_room_index,
         }
+    }
+
+    pub fn level_depth(&self) -> u32 {
+        self.level_depth
+    }
+
+    pub fn ladder_pos(&self) -> Position {
+        self.ladder_pos
+    }
+
+    pub fn load_next_level(&mut self, level: Level) {
+        let stats = self.player.stats.clone();
+        let class = self.player.class();
+        let (map, monsters, chests, start, ladder_pos, exit_room_index) = level.into_parts();
+
+        self.map = map;
+        self.entities = monsters;
+        self.chests = chests;
+        self.ladder_pos = ladder_pos;
+        self.exit_room_index = exit_room_index;
+        self.level_depth += 1;
+        self.mode = GameMode::Exploration;
+        self.player = Player::with_stats(start, class, stats);
+        self.status_message = format!(
+            "Zszedles na poziom {}. Pokonaj wszystkie potwory na mapie.",
+            self.level_depth
+        );
     }
 
     pub fn map(&self) -> &Map {
@@ -66,6 +116,13 @@ impl State {
         &self.status_message
     }
 
+    pub fn last_loot(&self) -> Option<(&str, &str)> {
+        match (&self.last_loot_name, &self.last_loot_effect) {
+            (Some(name), Some(effect)) => Some((name.as_str(), effect.as_str())),
+            _ => None,
+        }
+    }
+
     pub fn is_in_combat(&self) -> bool {
         matches!(self.mode, GameMode::Combat { .. })
     }
@@ -82,6 +139,10 @@ impl State {
             .entities
             .iter()
             .any(|monster| monster.room_index() == room_index)
+    }
+
+    pub fn is_level_cleared(&self) -> bool {
+        self.entities.is_empty()
     }
 
     fn chest_index_at(&self, pos: Position) -> Option<usize> {
@@ -130,6 +191,7 @@ impl State {
                 Some(Tile::Wall) => '#',
                 Some(Tile::Floor) => '.',
                 Some(Tile::Exit) => 'D',
+                Some(Tile::Ladder) => '>',
                 Some(Tile::Void) | None => ' ',
             },
         }
@@ -137,6 +199,22 @@ impl State {
 
     pub fn validate_placing(&self, pos: Position) -> bool {
         self.map.is_walkable(pos)
+    }
+
+    fn try_monster_heal_drop(&mut self) -> Option<String> {
+        let mut rng = rand::rng();
+        if !rng.random_bool(MONSTER_HEAL_DROP_CHANCE) {
+            return None;
+        }
+
+        ItemEffect::Heal(MONSTER_HEAL_AMOUNT).apply(&mut self.player.stats);
+        self.last_loot_name = Some("Mikstura z potwora".to_string());
+        self.last_loot_effect = Some(format!("+{MONSTER_HEAL_AMOUNT} HP"));
+        Some(format!(
+            "Drop: +{MONSTER_HEAL_AMOUNT} HP (teraz {}/{})",
+            self.player.stats.hp,
+            self.player.stats.max_hp
+        ))
     }
 
     fn try_open_chest(&mut self, chest_index: usize) {
@@ -156,11 +234,14 @@ impl State {
         if let Some(item) = self.chests[chest_index].open() {
             let item_name = item.name.to_string();
             self.player.apply_item(&item);
-            self.status_message = format!("Otworzyles skrzynke: {item_name}.");
+            let effect_text = item.effect.detail();
+            self.last_loot_name = Some(item_name.clone());
+            self.last_loot_effect = Some(effect_text);
+            self.status_message = item.effect.result_message(&item_name, &self.player.stats);
         }
     }
 
-    pub fn move_player(&mut self, direction: Direction) {
+    pub fn move_player(&mut self, direction: Direction) -> MoveResult {
         match &self.mode {
             GameMode::Exploration => {
                 let new_pos = self.player.pos() + direction.to_pos();
@@ -188,7 +269,9 @@ impl State {
                     if let Some(chest_index) = self.chest_index_at(new_pos) {
                         self.try_open_chest(chest_index);
                     }
+                    return self.check_ladder_descent();
                 }
+                MoveResult::Normal
             }
             GameMode::Combat { monster_index, .. } => {
                 let monster_index = *monster_index;
@@ -205,12 +288,19 @@ impl State {
                     CombatOutcome::MonsterDefeated => {
                         self.entities.remove(monster_index);
                         self.mode = GameMode::Exploration;
-                        if self.is_room_cleared(defeated_room) {
-                            self.status_message = format!(
-                                "{} Pokoj oczyszczony - mozesz otworzyc skrzynke.",
-                                result.message
-                            );
+
+                        let mut msg = result.message.clone();
+                        if let Some(heal) = self.try_monster_heal_drop() {
+                            msg = format!("{msg} {heal}");
                         }
+
+                        if self.is_room_cleared(defeated_room) {
+                            msg = format!("{msg} Pokoj oczyszczony - mozesz otworzyc skrzynke.");
+                        }
+                        if self.is_level_cleared() {
+                            msg = format!("{msg} Wszystkie potwory pokonane - idz na drabine!");
+                        }
+                        self.status_message = msg;
                     }
                     CombatOutcome::PlayerDefeated => {
                         self.player.stats.hp = self.player.stats.max_hp;
@@ -223,7 +313,22 @@ impl State {
                     }
                     CombatOutcome::Ongoing => {}
                 }
+                MoveResult::Normal
             }
         }
+    }
+
+    fn check_ladder_descent(&mut self) -> MoveResult {
+        if self.player.pos() != self.ladder_pos {
+            return MoveResult::Normal;
+        }
+
+        if !self.is_level_cleared() {
+            self.status_message =
+                "Pokonaj wszystkie potwory na mapie, zanim zejdziesz drabina!".to_string();
+            return MoveResult::Normal;
+        }
+
+        MoveResult::DescendLevel
     }
 }

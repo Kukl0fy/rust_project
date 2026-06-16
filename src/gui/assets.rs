@@ -61,6 +61,15 @@ impl AssetManager {
                 "2D Pixel Dungeon Asset Pack/items and trap_animation/chest/chest_open_1.png",
             )
             .await;
+        manager
+            .try_load("ladder", "assets/sprites/ladder.png")
+            .await;
+        manager
+            .try_load(
+                "heal_potion",
+                "2D Pixel Dungeon Asset Pack/items and trap_animation/flasks/flasks_1_2.png",
+            )
+            .await;
 
         manager
     }
@@ -81,7 +90,7 @@ impl AssetManager {
         dest_size: f32,
         tile_px: f32,
     ) {
-        self.draw_sprite(name, tile, dest_x, dest_y, dest_size, tile_px);
+        self.draw_sprite(name, tile, dest_x, dest_y, dest_size, tile_px, false);
     }
 
     pub fn draw_sprite(
@@ -92,6 +101,7 @@ impl AssetManager {
         dest_y: f32,
         dest_size: f32,
         tile_px: f32,
+        flip_x: bool,
     ) {
         if let Some(texture) = self.textures.get(name) {
             draw_texture_ex(
@@ -108,7 +118,7 @@ impl AssetManager {
                         tile_px,
                     )),
                     rotation: 0.0,
-                    flip_x: false,
+                    flip_x,
                     flip_y: false,
                     pivot: None,
                 },

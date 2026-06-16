@@ -25,12 +25,18 @@ async fn main() {
         0.4, // chest_spawn_chance
     );
 
-    let (map, monsters, chests, player_start) = level_generator.generate_level().into_parts();
+    let level = level_generator.generate_level();
+    let player_start = level.player_start();
+    let ladder_pos = level.ladder_pos();
+    let exit_room_index = level.exit_room_index();
+    let (map, monsters, chests, _, _, _) = level.into_parts();
     let mut state = State::new(
         map,
         Player::new(player_start, CharacterClass::Warrior),
         monsters,
         chests,
+        ladder_pos,
+        exit_room_index,
     );
 
     let renderer = GuiRenderer::new();
@@ -40,6 +46,12 @@ async fn main() {
     let asset_manager = AssetManager::new().await;
     let mut music = MusicManager::new().await;
     music.play_looping();
+
+    let try_move = |state: &mut State, direction: game::direction::Direction| {
+        if matches!(state.move_player(direction), MoveResult::DescendLevel) {
+            state.load_next_level(level_generator.generate_level());
+        }
+    };
 
     loop {
         match menu.current_state() {
@@ -59,15 +71,16 @@ async fn main() {
                 } else {
                     hud.render(&state);
                 }
+                Hud::render_loot(&state);
 
                 if is_key_pressed(KeyCode::Up) {
-                    state.move_player(game::direction::Direction::Up);
+                    try_move(&mut state, game::direction::Direction::Up);
                 } else if is_key_pressed(KeyCode::Down) {
-                    state.move_player(game::direction::Direction::Down);
+                    try_move(&mut state, game::direction::Direction::Down);
                 } else if is_key_pressed(KeyCode::Left) {
-                    state.move_player(game::direction::Direction::Left);
+                    try_move(&mut state, game::direction::Direction::Left);
                 } else if is_key_pressed(KeyCode::Right) {
-                    state.move_player(game::direction::Direction::Right);
+                    try_move(&mut state, game::direction::Direction::Right);
                 }
 
                 if is_key_pressed(KeyCode::P) {
@@ -85,6 +98,7 @@ async fn main() {
                 } else {
                     hud.render(&state);
                 }
+                Hud::render_loot(&state);
                 menu.render_pause_menu();
 
                 if is_key_pressed(KeyCode::P) {
