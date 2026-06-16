@@ -15,29 +15,24 @@ impl TileCoord {
     }
 }
 
-// Room template from Dungeon_Tileset.png (top-left, 16px grid).
-const FLOOR_A: TileCoord = TileCoord::new(1, 1);
-const FLOOR_B: TileCoord = TileCoord::new(2, 2);
-const FLOOR_C: TileCoord = TileCoord::new(3, 3);
+const FLOOR_A: TileCoord = TileCoord::new(6, 0);
+const FLOOR_B: TileCoord = TileCoord::new(6, 1);
+const FLOOR_C: TileCoord = TileCoord::new(7, 0);
 
 const WALL_NW: TileCoord = TileCoord::new(0, 0);
 const WALL_N: TileCoord = TileCoord::new(1, 0);
 const WALL_N_MID: TileCoord = TileCoord::new(2, 0);
 const WALL_NE: TileCoord = TileCoord::new(3, 0);
-const WALL_NW_SHADOW: TileCoord = TileCoord::new(0, 5);
-const WALL_N_SHADOW: TileCoord = TileCoord::new(1, 5);
-const WALL_N_MID_SHADOW: TileCoord = TileCoord::new(2, 5);
-const WALL_NE_SHADOW: TileCoord = TileCoord::new(3, 5);
 
 const WALL_W_TOP: TileCoord = TileCoord::new(0, 1);
 const WALL_W: TileCoord = TileCoord::new(0, 2);
 const WALL_W_BOT: TileCoord = TileCoord::new(0, 3);
 
-const WALL_E_TOP: TileCoord = TileCoord::new(4, 1);
-const WALL_E: TileCoord = TileCoord::new(4, 2);
-const WALL_E_BOT: TileCoord = TileCoord::new(4, 3);
+const WALL_E_TOP: TileCoord = TileCoord::new(5, 0);
+const WALL_E: TileCoord = TileCoord::new(5, 1);
+const WALL_E_BOT: TileCoord = TileCoord::new(5, 3);
 
-const WALL_SW: TileCoord = TileCoord::new(0, 4);
+const WALL_SW: TileCoord = TileCoord::new(3, 5);
 const WALL_S: TileCoord = TileCoord::new(1, 4);
 const WALL_S_MID: TileCoord = TileCoord::new(2, 4);
 const WALL_S_RIGHT: TileCoord = TileCoord::new(3, 4);
@@ -61,8 +56,8 @@ pub fn wall_draw(map: &Map, pos: Position) -> WallDraw {
 
 pub fn tile_for(map: &Map, pos: Position) -> TileCoord {
     match map.tile_at(pos) {
-        Some(Tile::Floor) | Some(Tile::Exit) | Some(Tile::Ladder) => floor_tile(pos),
-        Some(Tile::Wall) => wall_draw(map, pos).tile,
+        Some(Tile::Floor) | Some(Tile::Exit) => floor_tile(pos),
+        Some(Tile::Wall) => wall_tile(map, pos),
         Some(Tile::Void) | None => FLOOR_A,
     }
 }
@@ -88,16 +83,29 @@ fn wall_tile(map: &Map, pos: Position) -> WallDraw {
     let s = map.is_floor_neighbor(pos, 0, 1);
     let e = map.is_floor_neighbor(pos, 1, 0);
     let w = map.is_floor_neighbor(pos, -1, 0);
-    let void_n = is_void_neighbor(map, pos, 0, -1);
+    // Outer corners
+    if s && e && !n && !w {
+        return WALL_NW;
+    }
+    if s && w && !n && !e {
+        return WALL_NE;
+    }
+    if n && e && !s && !w {
+        return WALL_SW;
+    }
+    if n && w && !s && !e {
+        return WALL_SE;
+    }
 
-    let mask = (n as u8) | ((s as u8) << 1) | ((e as u8) << 2) | ((w as u8) << 3);
-
-    match mask {
-        // Zewnetrzne narozniki (n=bit0, s=bit1, e=bit2, w=bit3)
-        0b0110 => shadow_n(WallDraw::new(WALL_NW, false), void_n), // poludnie + wschod
-        0b1010 => shadow_n(WallDraw::new(WALL_NW, true), void_n), // poludnie + zachod (NE)
-        0b0101 => WallDraw::new(WALL_SW, false),                    // polnoc + wschod
-        0b1001 => WallDraw::new(WALL_SW, true),                     // polnoc + zachod (SE)
+    // North edge — floor to the south (front-facing brick)
+    if s && !n {
+        if e && w {
+            return pick_n_wall(map, pos);
+        }
+        if !e && !w {
+            return pick_n_wall(map, pos);
+        }
+    }
 
         // Proste krawedzie
         0b0010 => shadow_n(pick_n_wall(map, pos), void_n),
@@ -122,9 +130,12 @@ fn wall_tile(map: &Map, pos: Position) -> WallDraw {
     }
 }
 
-fn shadow_n(draw: WallDraw, void_n: bool) -> WallDraw {
-    if !void_n {
-        return draw;
+    // T-junctions: open side faces void
+    if s && e && w && !n {
+        return WALL_N;
+    }
+    if n && e && w && !s {
+        return WALL_S;
     }
     let tile = match draw.tile {
         WALL_NW => WALL_NW_SHADOW,
@@ -136,16 +147,16 @@ fn shadow_n(draw: WallDraw, void_n: bool) -> WallDraw {
     WallDraw::new(tile, draw.flip_x)
 }
 
-fn pick_n_wall(map: &Map, pos: Position) -> WallDraw {
+fn pick_n_wall(map: &Map, pos: Position) -> TileCoord {
     let continues_w = same_north_wall(map, pos, -1, 0);
     let continues_e = same_north_wall(map, pos, 1, 0);
 
     if !continues_w {
-        WallDraw::new(WALL_N, false)
+        WALL_N
     } else if !continues_e {
-        WallDraw::new(WALL_NW, true) // prawy koniec -> odbicie NW
+        WALL_N_MID
     } else {
-        WallDraw::new(WALL_N_MID, false)
+        WALL_N_MID
     }
 }
 
@@ -216,6 +227,3 @@ fn offset(pos: Position, dx: i32, dy: i32) -> Position {
     }
 }
 
-fn is_void_neighbor(map: &Map, pos: Position, dx: i32, dy: i32) -> bool {
-    matches!(map.tile_at(offset(pos, dx, dy)), Some(Tile::Void) | None)
-}

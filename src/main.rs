@@ -6,8 +6,8 @@ mod ui;
 use game::character_class::CharacterClass;
 use game::level_generator::LevelGenerator;
 use game::player::Player;
-use game::state::{MoveResult, State};
-use gui::{conf, AssetManager, BattleUi, GuiRenderer, Hud, Menu, MenuState};
+use game::state::State;
+use gui::{conf, AssetManager, BattleUi, GuiRenderer, Hud, Menu, MenuState, MusicManager};
 use macroquad::prelude::*;
 
 #[macroquad::main(conf)]
@@ -44,6 +44,8 @@ async fn main() {
     let battle_ui = BattleUi;
     let mut menu = Menu::new();
     let asset_manager = AssetManager::new().await;
+    let mut music = MusicManager::new().await;
+    music.play_looping();
 
     let try_move = |state: &mut State, direction: game::direction::Direction| {
         if matches!(state.move_player(direction), MoveResult::DescendLevel) {
